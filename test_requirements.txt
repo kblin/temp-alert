@@ -1,1 +1,1 @@
-mimimock
+minimock
