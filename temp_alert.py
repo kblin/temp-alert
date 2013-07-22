@@ -110,7 +110,7 @@ def main():
     # override defaults from config
     if config.has_section('temp-monitor') and \
        config.has_option('temp-monitor', 'host'):
-        host = config.get('temp-monitor')
+        host = config.get('temp-monitor', 'host')
     if config.has_section('temp-monitor') and \
        config.has_option('temp-monitor', 'port'):
         port = config.getint('temp-monitor', 'port')
