@@ -2,6 +2,9 @@
 # vim:set fileencoding=utf8 :
 
 import json
+import sys
+import ConfigParser
+from os import path
 from urllib2 import urlopen
 
 class TempAlert(object):
@@ -52,10 +55,31 @@ class TempAlert(object):
         return problematic
 
 
+def load_config():
+    "Load config file"
+    config = ConfigParser.SafeConfigParser()
+    config.read(path.expanduser("~/.temp_alertrc"))
+    return config
+
+
 def main():
-    ta = TempAlert()
+    # defaults
+    host = 'localhost'
+    port = 8367
+    config = load_config()
+
+    # override defaults from config
+    if config.has_section('temp-monitor') and \
+       config.has_option('temp-monitor', 'host'):
+        host = config.get('temp-monitor')
+    if config.has_section('temp-monitor') and \
+       config.has_option('temp-monitor', 'port'):
+        port = config.getint('temp-monitor', 'port')
+    ta = TempAlert(host=host, port=port)
+
     status = ta.get_status()
-    print status
+    if status == "ok":
+        sys.exit(0)
 
 
 if __name__ == "__main__":

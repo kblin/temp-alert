@@ -1,0 +1,3 @@
+[temp-monitor]
+host: localhost
+port: 8367 
