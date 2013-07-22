@@ -1,3 +1,8 @@
 [temp-monitor]
 host: localhost
-port: 8367 
+port: 8367
+
+[email]
+host: localhost
+sender: alerter@example.org
+recipients: alice@example.org, bob@example.org

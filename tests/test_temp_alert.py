@@ -1,6 +1,8 @@
 try: import unittest2 as unittest
 except ImportError: import unittest
-from minimock import mock, restore, TraceTracker, assert_same_trace
+import smtplib
+import ConfigParser
+from minimock import mock, restore, TraceTracker, assert_same_trace, Mock
 from temp_alert import TempAlert
 import temp_alert as orig_ta
 from cStringIO import StringIO
@@ -118,3 +120,28 @@ class TestTempAlert(unittest.TestCase):
         expected += "Called temp_alert.get_data('fine02')\n"
         expected += "Called temp_alert.get_data('panic')\n"
 
+class TestSendAlertMail(unittest.TestCase):
+    def setUp(self):
+        self.tt = TraceTracker()
+        mock("smtplib.SMTP", returns=Mock('smtp_conn', tracker=self.tt),
+             tracker=self.tt)
+        self.config = ConfigParser.SafeConfigParser()
+        self.config.add_section('email')
+        self.config.set('email', 'host', 'localhost')
+        self.config.set('email', 'sender', 'sally@example.com')
+        self.config.set('email', 'recipients',
+                        'alice@example.com, bob@example.com')
+
+    def tearDown(self):
+        restore()
+
+    def test_send_email(self):
+        "Test send_email()"
+        expected = r'''Called smtplib.SMTP('localhost')
+Called smtp_conn.sendmail(
+    'sally@example.com',
+    ['alice@example.com', 'bob@example.com'],
+    'From: sally@example.com\nTo: alice@example.com, bob@example.com\nSubject: Temperature Alert - Status: alarm\n\nThe following sensors are in alarm or panic state:\nSensor\tTemperature\nfoo\t23.42\nbar\t42.23\n\nSincerely,\ntemp-alert\n')
+Called smtp_conn.quit()'''
+        orig_ta.send_email(self.config, 'alarm', {'foo': 23.42, 'bar': 42.23})
+        assert_same_trace(self.tt, expected)
