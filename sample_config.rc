@@ -6,3 +6,4 @@ port: 8367
 host: localhost
 sender: alerter@example.org
 recipients: alice@example.org, bob@example.org
+lockfile: /tmp/temp-alert.lck

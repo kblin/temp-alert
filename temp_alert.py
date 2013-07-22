@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # vim:set fileencoding=utf8 :
 
+import os
 import json
 import sys
+import time
 import smtplib
 import ConfigParser
 from os import path
@@ -101,6 +103,39 @@ temp-alert
     conn.quit()
 
 
+def lock_expired(config):
+    "Check if the log file exists and is older than 10 minutes"
+
+    if not config.has_option('email', 'lockfile'):
+        return True
+
+    lockfile = config.get('email', 'lockfile')
+    if not path.exists(lockfile):
+        return True
+
+    statinfo = os.stat(lockfile)
+    now = time.time()
+    # if the lockfile is older than 600 seconds, the lock expired
+    if now - statinfo.st_mtime > 600:
+        return True
+
+    return False
+
+
+def set_lock(config):
+    "Create or update the lockfile"
+    if not config.has_option('email', 'lockfile'):
+        return
+
+    lockfile = config.get('email', 'lockfile')
+    if not os.path.exists(lockfile):
+        handle = open(lockfile, 'w')
+        handle.close()
+        return
+
+    os.utime(lockfile, None)
+
+
 def main():
     # defaults
     host = 'localhost'
@@ -120,7 +155,9 @@ def main():
     if status == "ok":
         sys.exit(0)
 
-    send_email(config, status, ta.find_problematic_sensors())
+    if lock_expired(config):
+        send_email(config, status, ta.find_problematic_sensors())
+        set_lock(config)
 
 
 if __name__ == "__main__":
