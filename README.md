@@ -8,7 +8,7 @@ Read data from the rpi-temp-monitor website and send warning emails if some sens
 Installation
 ------------
 
-None yet, this is work in progress
+Requires [rpi-temp-monitor](https://github.com/kblin/rpi-temp-monitor) version 0.2.0
 
 
 License

@@ -49,7 +49,7 @@ class TestTempAlert(unittest.TestCase):
              returns={u'error': u'failed reading sensors'}, tracker=self.tt)
         self.assertEqual('error reading from server', temp_alert.get_status())
 
-        expected = "Called temp_alert.get_data('')\n" * 4
+        expected = "Called temp_alert.get_data('status')\n" * 4
         assert_same_trace(self.tt, expected)
 
 

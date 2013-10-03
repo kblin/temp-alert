@@ -28,7 +28,7 @@ class TempAlert(object):
 
     def get_status(self):
         """Get the status of the sensors"""
-        status = self.get_data('')
+        status = self.get_data('status')
         if 'status' not in status:
             return 'error reading from server'
         return status['status']
