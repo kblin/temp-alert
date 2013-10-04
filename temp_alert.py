@@ -73,11 +73,11 @@ def build_alert_mail(status, sensors):
     sensor_text = sensor_text[:-1]
     template = """From: %(sender)s
 To: %(recipients)s
-Subject: Temperature Alert - Status: {}
+Subject: Temperature Alert - Status: {0}
 
 The following sensors are in alarm or panic state:
 Sensor\tTemperature
-{}
+{1}
 
 Sincerely,
 temp-alert
@@ -90,9 +90,9 @@ def build_error_mail(error, explanation):
     "Build the text for an error email"
     template = """From: %(sender)s
 To: %(recipients)s
-Subject: Temperature Alert - Error: {}
+Subject: Temperature Alert - Error: {0}
 
-{}
+{1}
 
 Sincerely,
 temp-alert
