@@ -144,7 +144,8 @@ Called smtp_conn.sendmail(
     ['alice@example.com', 'bob@example.com'],
     'From: sally@example.com\nTo: alice@example.com, bob@example.com\nSubject: Temperature Alert - Status: alarm\n\nThe following sensors are in alarm or panic state:\nSensor\tTemperature\nfoo\t23.42\nbar\t42.23\n\nSincerely,\ntemp-alert\n')
 Called smtp_conn.quit()'''
-        orig_ta.send_email(self.config, 'alarm', {'foo': 23.42, 'bar': 42.23})
+        template = orig_ta.build_alert_mail('alarm', {'foo': 23.42, 'bar': 42.23})
+        orig_ta.send_email(self.config, template)
         assert_same_trace(self.tt, expected)
 
 
