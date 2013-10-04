@@ -8,7 +8,7 @@ import time
 import smtplib
 import ConfigParser
 from os import path
-from urllib2 import urlopen
+from urllib2 import urlopen, URLError
 
 class TempAlert(object):
     """A class that bundles all the methods for dealing with the
@@ -65,19 +65,44 @@ def load_config():
     return config
 
 
-def send_email(config, status, sensors):
-    "Send an alert email"
+def build_alert_mail(status, sensors):
+    "Build the text for a temperature alert email"
+    sensor_text = ""
+    for name in sensors:
+        sensor_text += "%s\t%0.2f\n" % (name, sensors[name])
+    sensor_text = sensor_text[:-1]
     template = """From: %(sender)s
 To: %(recipients)s
-Subject: Temperature Alert - Status: %(status)s
+Subject: Temperature Alert - Status: {}
 
 The following sensors are in alarm or panic state:
 Sensor\tTemperature
-%(sensors)s
+{}
 
 Sincerely,
 temp-alert
-"""
+""".format(status, sensor_text)
+
+    return template
+
+
+def build_error_mail(error, explanation):
+    "Build the text for an error email"
+    template = """From: %(sender)s
+To: %(recipients)s
+Subject: Temperature Alert - Error: {}
+
+{}
+
+Sincerely,
+temp-alert
+""".format(error, explanation)
+
+    return template
+
+
+def send_email(config, template):
+    "Send an alert email"
     contents = dict(config.items('email'))
     if not 'sender' in contents:
         raise ValueError("No sender in configfile")
@@ -85,14 +110,6 @@ temp-alert
         raise ValueError("No recipients in configfile")
     if not 'host' in contents:
         raise ValueError("No mail server set in configfile")
-
-    contents['status'] = status
-
-    sensor_text = ""
-    for name in sensors:
-        sensor_text += "%s\t%0.2f\n" % (name, sensors[name])
-    sensor_text = sensor_text[:-1]
-    contents['sensors'] = sensor_text
 
     message = template % contents
 
@@ -151,12 +168,24 @@ def main():
         port = config.getint('temp-monitor', 'port')
     ta = TempAlert(host=host, port=port)
 
-    status = ta.get_status()
-    if status == "ok":
-        sys.exit(0)
+    error = None
+    explanation = ""
+    try:
+        status = ta.get_status()
+        if status == "ok":
+            sys.exit(0)
+
+        sensors = ta.find_problematic_sensors()
+    except URLError, e:
+        error = "Failed to contact server"
+        explanation = str(e)
 
     if lock_expired(config):
-        send_email(config, status, ta.find_problematic_sensors())
+        if error is not None:
+            template = build_error_mail(error, explanation)
+        else:
+            template = build_alert_mail(status, sensors)
+        send_email(config, template)
         set_lock(config)
 
 
